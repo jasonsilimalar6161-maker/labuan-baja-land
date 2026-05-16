@@ -1,0 +1,91 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_style %}
+<style>
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:32px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.stat-val{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:var(--primary)}
+.stat-lbl{color:var(--muted);font-size:.82rem;margin-top:4px}
+.actions{display:flex;gap:12px;margin-bottom:24px;align-items:center;justify-content:space-between}
+.land-img{width:54px;height:40px;object-fit:cover;border-radius:8px;background:#111d2e}
+.land-img-placeholder{width:54px;height:40px;border-radius:8px;background:rgba(200,169,110,.08);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.7rem}
+.badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:.72rem;font-weight:600}
+.badge-green{background:rgba(40,167,69,.15);color:#6dcd87}
+.badge-gray{background:rgba(108,117,125,.15);color:#9ba3af}
+.badge-gold{background:rgba(200,169,110,.15);color:var(--primary)}
+.price-text{color:var(--primary);font-weight:600}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>Selamat datang, {{ session.username }}! Kelola listing tanah di sini.</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val">{{ total }}</div><div class="stat-lbl">Total Listing</div></div>
+  <div class="stat"><div class="stat-val" style="color:#6dcd87">{{ dijual }}</div><div class="stat-lbl">Sedang Dijual</div></div>
+  <div class="stat"><div class="stat-val" style="color:var(--muted)">{{ terjual }}</div><div class="stat-lbl">Terjual</div></div>
+</div>
+
+<div class="actions">
+  <span style="font-weight:600">Semua Listing Tanah</span>
+  <a href="/admin/tanah/tambah" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Tanah</a>
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Foto</th>
+        <th>Judul</th>
+        <th>Lokasi</th>
+        <th>Luas</th>
+        <th>Harga</th>
+        <th>Sertifikat</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for land in lands %}
+      {% set imgs = land.images | fromjson %}
+      <tr>
+        <td>
+          {% if imgs %}
+            <img src="/static/uploads/{{ imgs[0] }}" class="land-img" alt="">
+          {% else %}
+            <div class="land-img-placeholder"><i class="fas fa-image"></i></div>
+          {% endif %}
+        </td>
+        <td><strong>{{ land.title }}</strong></td>
+        <td style="color:var(--muted)"><i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> {{ land.location }}</td>
+        <td>{{ land.area }} m²</td>
+        <td class="price-text">Rp {{ '{:,.0f}'.format(land.price).replace(',', '.') }}</td>
+        <td><span class="badge badge-gold">{{ land.certificate }}</span></td>
+        <td>
+          {% if land.status == 'Dijual' %}
+            <span class="badge badge-green">{{ land.status }}</span>
+          {% else %}
+            <span class="badge badge-gray">{{ land.status }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex;gap:8px">
+            <a href="/tanah/{{ land.id }}" class="btn btn-outline btn-sm" target="_blank"><i class="fas fa-eye"></i></a>
+            <a href="/admin/tanah/edit/{{ land.id }}" class="btn btn-outline btn-sm"><i class="fas fa-edit"></i></a>
+            <form method="POST" action="/admin/tanah/hapus/{{ land.id }}" style="display:inline"
+                  onsubmit="return confirm('Hapus listing ini?')">
+              <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not lands %}
+      <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px">Belum ada listing. <a href="/admin/tanah/tambah">Tambah sekarang</a></td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

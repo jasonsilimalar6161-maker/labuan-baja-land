@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block title %}{{ land.title }} - {{ settings.site_title }}{% endblock %}
+{% block extra_style %}
+<style>
+.detail-wrap{max-width:1100px;margin:50px auto;padding:0 24px;display:grid;grid-template-columns:1fr 360px;gap:40px}
+@media(max-width:800px){.detail-wrap{grid-template-columns:1fr}}
+
+/* GALLERY */
+.gallery{border-radius:var(--radius);overflow:hidden;margin-bottom:32px}
+.gallery-main{height:420px;background:#111d2e;position:relative}
+.gallery-main img{width:100%;height:100%;object-fit:cover}
+.gallery-thumbs{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.gallery-thumb{
+  width:90px;height:65px;border-radius:10px;overflow:hidden;cursor:pointer;
+  border:2px solid transparent;transition:.2s;
+}
+.gallery-thumb.active,.gallery-thumb:hover{border-color:var(--primary)}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover}
+.no-img{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);flex-direction:column;gap:12px}
+
+/* INFO */
+.land-badge{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.land-badge span{background:rgba(200,169,110,.1);border:1px solid var(--border);color:var(--primary);padding:5px 14px;border-radius:100px;font-size:.8rem}
+.land-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;margin-bottom:12px}
+.land-location{color:var(--muted);margin-bottom:24px;font-size:1rem;display:flex;align-items:center;gap:8px}
+.info-table{width:100%;border-collapse:collapse;margin-bottom:28px}
+.info-table td{padding:11px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.info-table td:first-child{color:var(--muted);width:45%}
+.info-table td:last-child{font-weight:500}
+.desc-block{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:28px}
+.desc-block h3{font-family:'Playfair Display',serif;margin-bottom:12px;font-size:1.1rem}
+.desc-block p{color:var(--muted);line-height:1.7;font-size:.9rem}
+
+/* SIDEBAR */
+.sidebar{position:sticky;top:90px;align-self:start}
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px}
+.price-card .price{font-family:'Playfair Display',serif;font-size:2rem;color:var(--primary);font-weight:700;margin-bottom:6px}
+.price-card .per{color:var(--muted);font-size:.85rem;margin-bottom:22px}
+.wa-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#25d366;color:#fff;padding:14px;border-radius:100px;
+  font-size:1rem;font-weight:600;text-decoration:none;transition:.25s;width:100%;margin-bottom:12px;
+}
+.wa-btn:hover{background:#1da851;color:#fff}
+.wa-btn i{font-size:1.2rem}
+.cert-card{background:rgba(200,169,110,.08);border:1px solid var(--border);border-radius:12px;padding:18px}
+.cert-card h4{color:var(--primary);margin-bottom:10px;font-size:.9rem;text-transform:uppercase;letter-spacing:1px}
+.cert-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:.88rem}
+.cert-item i{color:#6dcd87;width:18px}
+
+/* MAP */
+.map-section{margin-bottom:32px}
+.map-section h3{font-family:'Playfair Display',serif;margin-bottom:14px;font-size:1.2rem}
+#map{height:350px;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.map-coords{color:var(--muted);font-size:.8rem;margin-top:8px}
+
+.back-link{color:var(--muted);font-size:.88rem;margin-bottom:20px;display:inline-flex;align-items:center;gap:6px}
+.back-link:hover{color:var(--text)}
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+{% block content %}
+<div class="detail-wrap">
+  <div>
+    <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Kembali ke Beranda</a>
+
+    <!-- Gallery -->
+    <div class="gallery">
+      <div class="gallery-main" id="mainImg">
+        {% if images %}
+          <img src="/static/uploads/{{ images[0] }}" id="mainImgEl" alt="{{ land.title }}">
+        {% else %}
+          <div class="no-img"><i class="fas fa-mountain" style="font-size:3rem;opacity:.3"></i><span>Belum ada foto</span></div>
+        {% endif %}
+      </div>
+      {% if images|length > 1 %}
+      <div class="gallery-thumbs">
+        {% for img in images %}
+        <div class="gallery-thumb {% if loop.index == 1 %}active{% endif %}" onclick="changeImg('{{ img }}',this)">
+          <img src="/static/uploads/{{ img }}" alt="">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="land-badge">
+      <span><i class="fas fa-certificate"></i> {{ land.certificate }}</span>
+      <span>{{ land.land_type }}</span>
+      <span class="{% if land.status=='Dijual' %}{% endif %}">{{ land.status }}</span>
+    </div>
+    <div class="land-title">{{ land.title }}</div>
+    <div class="land-location"><i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> {{ land.location }}</div>
+
+    <table class="info-table">
+      <tr><td>Luas Tanah</td><td>{{ land.area }} m²</td></tr>
+      <tr><td>Harga</td><td style="color:var(--primary);font-weight:700">Rp {{ '{:,.0f}'.format(land.price).replace(',', '.') }}</td></tr>
+      <tr><td>Sertifikat</td><td>{{ land.certificate }}</td></tr>
+      <tr><td>Jenis Tanah</td><td>{{ land.land_type }}</td></tr>
+      <tr><td>Status</td><td>{{ land.status }}</td></tr>
+      {% if land.lat and land.lng %}
+      <tr><td>Koordinat</td><td>{{ land.lat }}, {{ land.lng }}</td></tr>
+      {% endif %}
+      <tr><td>Diposting</td><td>{{ land.created_at[:10] }}</td></tr>
+    </table>
+
+    {% if land.description %}
+    <div class="desc-block">
+      <h3>Keterangan Tanah</h3>
+      <p>{{ land.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Legal Info -->
+    <div class="cert-card" style="margin-bottom:28px">
+      <h4>✅ Informasi Legal & Kepemilikan</h4>
+      <div class="cert-item"><i class="fas fa-check-circle"></i> Tanah Pribadi (Bukan Tanah Negara)</div>
+      <div class="cert-item"><i class="fas fa-check-circle"></i> Sertifikat {{ land.certificate }} Lengkap</div>
+      <div class="cert-item"><i class="fas fa-check-circle"></i> Tidak ada sengketa</div>
+      <div class="cert-item"><i class="fas fa-check-circle"></i> Siap Proses Balik Nama</div>
+    </div>
+
+    <!-- Map -->
+    {% if land.lat and land.lng %}
+    <div class="map-section">
+      <h3><i class="fas fa-map-pin" style="color:var(--primary)"></i> Lokasi Tanah</h3>
+      <div id="map"></div>
+      <div class="map-coords">📍 Koordinat: {{ land.lat }}, {{ land.lng }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="price-card">
+      <div class="price">Rp {{ '{:,.0f}'.format(land.price).replace(',', '.') }}</div>
+      <div class="per">{{ land.area }} m² · {{ land.location }}</div>
+      <a href="https://wa.me/{{ wa_number }}?text=Halo,%20saya%20tertarik%20dengan%20tanah%20*{{ land.title | urlencode }}*%20di%20{{ land.location | urlencode }}.%20Apakah%20masih%20tersedia%3F"
+         target="_blank" class="wa-btn">
+        <i class="fab fa-whatsapp"></i> Hubungi via WhatsApp
+      </a>
+      <div style="text-align:center;color:var(--muted);font-size:.8rem">Respon cepat via WhatsApp</div>
+    </div>
+
+    <div class="cert-card">
+      <h4>📋 Ringkasan</h4>
+      <div class="cert-item"><i class="fas fa-ruler-combined"></i> Luas: {{ land.area }} m²</div>
+      <div class="cert-item"><i class="fas fa-file-contract"></i> {{ land.certificate }}</div>
+      <div class="cert-item"><i class="fas fa-user"></i> {{ land.land_type }}</div>
+      <div class="cert-item"><i class="fas fa-map-marker-alt"></i> {{ land.location }}</div>
+      {% if land.lat and land.lng %}
+      <div class="cert-item"><i class="fas fa-crosshairs"></i> Koordinat Tersedia</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if land.lat and land.lng %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map').setView([{{ land.lat }}, {{ land.lng }}], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+const icon = L.divIcon({
+  html:'<div style="background:#c8a96e;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>',
+  iconSize:[24,24],iconAnchor:[12,24],className:''
+});
+L.marker([{{ land.lat }}, {{ land.lng }}],{icon})
+  .addTo(map)
+  .bindPopup('<b>{{ land.title }}</b><br>{{ land.location }}')
+  .openPopup();
+</script>
+{% endif %}
+
+<script>
+function changeImg(fname, el) {
+  document.getElementById('mainImgEl').src = '/static/uploads/' + fname;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+{% endblock %}

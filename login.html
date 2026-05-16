@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login Admin · Tanah Labuan Bajo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 20% 50%,rgba(200,169,110,.12) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(10,50,100,.3) 0%,transparent 60%),#0a1628;
+}
+.login-box{
+  width:100%;max-width:420px;padding:24px;
+}
+.logo{text-align:center;margin-bottom:40px}
+.logo h1{font-family:'Playfair Display',serif;font-size:2rem;color:#e8dcc8}
+.logo h1 span{color:#c8a96e}
+.logo p{color:rgba(232,220,200,.5);font-size:.88rem;margin-top:6px}
+.card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(200,169,110,.2);
+  border-radius:20px;padding:36px;
+}
+.form-group{margin-bottom:20px}
+label{display:block;color:rgba(232,220,200,.7);font-size:.85rem;margin-bottom:8px}
+input{
+  width:100%;padding:12px 16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(200,169,110,.2);
+  border-radius:12px;color:#e8dcc8;font-family:'DM Sans',sans-serif;font-size:.95rem;
+  outline:none;transition:.25s;
+}
+input:focus{border-color:#c8a96e;background:rgba(200,169,110,.06)}
+.input-wrap{position:relative}
+.input-wrap input{padding-right:44px}
+.toggle-pw{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(232,220,200,.4);cursor:pointer;font-size:.9rem}
+.toggle-pw:hover{color:#c8a96e}
+.btn{
+  width:100%;padding:13px;background:#c8a96e;color:#0a1628;
+  border:none;border-radius:100px;font-size:1rem;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:.25s;margin-top:8px;
+}
+.btn:hover{background:#a8893e}
+.flash{
+  padding:12px 16px;border-radius:12px;margin-bottom:20px;font-size:.88rem;
+  background:rgba(220,53,69,.12);border:1px solid rgba(220,53,69,.3);color:#f1939e;
+}
+.back{text-align:center;margin-top:20px}
+.back a{color:rgba(200,169,110,.6);font-size:.85rem}
+.back a:hover{color:#c8a96e}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:rgba(232,220,200,.25);font-size:.75rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(200,169,110,.15)}
+</style>
+</head>
+<body>
+<div class="login-box">
+  <div class="logo">
+    <h1>🌊 <span>Tanah</span> Labuan Bajo</h1>
+    <p>Panel Administrasi</p>
+  </div>
+  <div class="card">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Username</label>
+        <input type="text" name="username" placeholder="Masukkan username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <div class="input-wrap">
+          <input type="password" name="password" id="pw" placeholder="Masukkan password" required>
+          <button type="button" class="toggle-pw" onclick="togglePw()"><i class="fas fa-eye" id="eye"></i></button>
+        </div>
+      </div>
+      <button type="submit" class="btn"><i class="fas fa-sign-in-alt"></i> Masuk</button>
+    </form>
+
+    <div class="divider">akun default</div>
+    <div style="font-size:.78rem;color:rgba(232,220,200,.35);text-align:center;line-height:1.8">
+      superadmin / admin123 · admin / admin456
+    </div>
+  </div>
+  <div class="back"><a href="/"><i class="fas fa-arrow-left"></i> Kembali ke Website</a></div>
+</div>
+<script>
+function togglePw(){
+  const pw=document.getElementById('pw'),eye=document.getElementById('eye');
+  pw.type=pw.type==='password'?'text':'password';
+  eye.className=pw.type==='password'?'fas fa-eye':'fas fa-eye-slash';
+}
+</script>
+</body>
+</html>

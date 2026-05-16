@@ -1,0 +1,186 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Tambah Tanah{% endblock %}
+{% block extra_style %}
+<style>
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.span2{grid-column:span 2}
+#map-picker{height:380px;border-radius:12px;border:1px solid var(--border);cursor:crosshair}
+.map-hint{color:var(--muted);font-size:.8rem;margin-top:8px}
+.coord-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.img-preview{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.img-preview-item{position:relative;width:90px;height:70px;border-radius:10px;overflow:hidden}
+.img-preview-item img{width:100%;height:100%;object-fit:cover}
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Tambah Listing Tanah</h1>
+  <p>Isi informasi tanah yang akan dijual</p>
+</div>
+<form method="POST" enctype="multipart/form-data">
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:28px">
+    <div>
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:20px">Informasi Tanah</h3>
+        <div class="form-grid">
+          <div class="form-group span2">
+            <label>Judul Listing *</label>
+            <input type="text" name="title" placeholder="cth: Tanah Strategis Pinggir Jalan Utama" required>
+          </div>
+          <div class="form-group">
+            <label>Lokasi / Alamat *</label>
+            <input type="text" name="location" placeholder="cth: Jl. Soekarno Hatta, Labuan Bajo" required>
+          </div>
+          <div class="form-group">
+            <label>Jenis Tanah</label>
+            <select name="land_type">
+              <option>Tanah Pribadi</option>
+              <option>Tanah Kavling</option>
+              <option>Tanah Sawah</option>
+              <option>Tanah Kebun</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Luas Tanah (m²) *</label>
+            <input type="number" name="area" placeholder="cth: 500" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>Harga (Rp) *</label>
+            <input type="text" name="price" id="price-input" placeholder="cth: 500.000.000" required>
+          </div>
+          <div class="form-group">
+            <label>Sertifikat</label>
+            <select name="certificate">
+              <option value="SHM">SHM (Sertifikat Hak Milik)</option>
+              <option value="SHGB">SHGB (Hak Guna Bangunan)</option>
+              <option value="Girik">Girik</option>
+              <option value="AJB">AJB</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status">
+              <option>Dijual</option>
+              <option>Terjual</option>
+              <option>Negosiasi</option>
+            </select>
+          </div>
+          <div class="form-group span2">
+            <label>Keterangan Tambahan</label>
+            <textarea name="description" rows="5" placeholder="Deskripsikan kondisi tanah, akses jalan, fasilitas sekitar, dll..."></textarea>
+          </div>
+          <div class="form-group span2">
+            <label>Nomor WhatsApp Kontak (opsional, jika berbeda dari default)</label>
+            <input type="text" name="contact_wa" placeholder="cth: 6281234567890 (dengan kode negara)">
+            <small style="color:var(--muted)">Kosongkan untuk menggunakan nomor WA default dari pengaturan</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:8px">📸 Foto Tanah</h3>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Upload beberapa foto (jpg, png, webp). Foto pertama jadi thumbnail.</p>
+        <input type="file" name="images" multiple accept="image/*" onchange="previewImgs(this)">
+        <div class="img-preview" id="img-preview"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:8px">📍 Pin Lokasi di Peta</h3>
+        <p style="color:var(--muted);font-size:.82rem;margin-bottom:14px">Klik pada peta untuk menentukan titik lokasi tanah secara akurat.</p>
+        <div id="map-picker"></div>
+        <div class="map-hint">🖱 Klik pada peta untuk menempatkan pin lokasi</div>
+        <div class="coord-row" style="margin-top:14px">
+          <div class="form-group">
+            <label>Latitude</label>
+            <input type="text" name="lat" id="lat-inp" placeholder="cth: -8.4956">
+          </div>
+          <div class="form-group">
+            <label>Longitude</label>
+            <input type="text" name="lng" id="lng-inp" placeholder="cth: 119.8851">
+          </div>
+        </div>
+        <button type="button" onclick="resetPin()" class="btn btn-outline btn-sm" style="width:100%">
+          <i class="fas fa-times"></i> Hapus Pin
+        </button>
+      </div>
+
+      <div class="card" style="background:rgba(200,169,110,.06);border-color:rgba(200,169,110,.3)">
+        <h4 style="color:var(--primary);margin-bottom:12px">✅ Info Otomatis Ditampilkan</h4>
+        <div style="font-size:.83rem;color:var(--muted);line-height:1.9">
+          ✔ Tanah Pribadi<br>
+          ✔ Surat-Surat Lengkap<br>
+          ✔ Tidak Ada Sengketa<br>
+          ✔ Siap Balik Nama<br>
+          ✔ Link WhatsApp Langsung
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px">
+        <a href="/admin" class="btn btn-outline" style="flex:1;justify-content:center">Batal</a>
+        <button type="submit" class="btn btn-primary" style="flex:2;justify-content:center">
+          <i class="fas fa-save"></i> Simpan Listing
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Map centered on Labuan Bajo
+const map = L.map('map-picker').setView([-8.4956, 119.8851], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+let marker = null;
+
+const pinIcon = L.divIcon({
+  html:'<div style="background:#c8a96e;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>',
+  iconSize:[22,22],iconAnchor:[11,22],className:''
+});
+
+map.on('click', function(e) {
+  const {lat, lng} = e.latlng;
+  document.getElementById('lat-inp').value = lat.toFixed(6);
+  document.getElementById('lng-inp').value = lng.toFixed(6);
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+});
+
+document.getElementById('lat-inp').addEventListener('change', updateFromInputs);
+document.getElementById('lng-inp').addEventListener('change', updateFromInputs);
+
+function updateFromInputs() {
+  const lat = parseFloat(document.getElementById('lat-inp').value);
+  const lng = parseFloat(document.getElementById('lng-inp').value);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    map.setView([lat, lng], 15);
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+  }
+}
+
+function resetPin() {
+  document.getElementById('lat-inp').value = '';
+  document.getElementById('lng-inp').value = '';
+  if (marker) { map.removeLayer(marker); marker = null; }
+}
+
+function previewImgs(input) {
+  const preview = document.getElementById('img-preview');
+  preview.innerHTML = '';
+  [...input.files].forEach(f => {
+    const url = URL.createObjectURL(f);
+    preview.innerHTML += `<div class="img-preview-item"><img src="${url}"></div>`;
+  });
+}
+
+// Format price input
+document.getElementById('price-input').addEventListener('input', function() {
+  let v = this.value.replace(/\D/g,'');
+  this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+});
+</script>
+{% endblock %}

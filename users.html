@@ -1,0 +1,97 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Kelola Admin{% endblock %}
+{% block extra_style %}
+<style>
+.role-super{background:rgba(200,169,110,.15);color:var(--primary);padding:3px 12px;border-radius:100px;font-size:.75rem;font-weight:600}
+.role-admin{background:rgba(100,150,255,.12);color:#7eb3ff;padding:3px 12px;border-radius:100px;font-size:.75rem;font-weight:600}
+.add-user-card{margin-bottom:24px}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Kelola Admin</h1>
+  <p>Tambah dan kelola akun admin. Hanya superadmin yang bisa mengakses halaman ini.</p>
+</div>
+
+<!-- Add User Form -->
+<div class="card add-user-card">
+  <h3 style="font-family:'Playfair Display',serif;margin-bottom:20px">Tambah Admin Baru</h3>
+  <form method="POST" action="/admin/pengguna/tambah">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:14px;align-items:end">
+      <div class="form-group" style="margin:0">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="cth: admin2" required>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Minimal 6 karakter" required minlength="6">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Role</label>
+        <select name="role">
+          <option value="admin">Admin</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="height:44px">
+        <i class="fas fa-user-plus"></i> Tambah
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+  <h3 style="font-family:'Playfair Display',serif;margin-bottom:20px">Daftar Admin</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Tanggal Dibuat</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td style="color:var(--muted)">{{ loop.index }}</td>
+        <td>
+          <strong>{{ user.username }}</strong>
+          {% if user.id == session.user_id %}
+          <span style="color:var(--muted);font-size:.75rem"> (anda)</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if user.role == 'superadmin' %}
+          <span class="role-super">⭐ Superadmin</span>
+          {% else %}
+          <span class="role-admin">Admin</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted)">{{ user.created_at[:10] if user.created_at else '-' }}</td>
+        <td>
+          {% if user.id != session.user_id %}
+          <form method="POST" action="/admin/pengguna/hapus/{{ user.id }}" style="display:inline"
+                onsubmit="return confirm('Hapus admin {{ user.username }}?')">
+            <button type="submit" class="btn btn-danger btn-sm">
+              <i class="fas fa-trash"></i> Hapus
+            </button>
+          </form>
+          {% else %}
+          <span style="color:var(--muted);font-size:.8rem">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div style="margin-top:20px;padding:16px;background:rgba(200,169,110,.06);border:1px solid var(--border);border-radius:12px;font-size:.83rem;color:var(--muted)">
+  <strong style="color:var(--primary)">Perbedaan Role:</strong><br>
+  • <strong>Superadmin</strong> — bisa tambah/hapus admin lain, ubah pengaturan website, tambah/edit/hapus listing tanah<br>
+  • <strong>Admin</strong> — bisa tambah/edit/hapus listing tanah dan ubah pengaturan, tidak bisa kelola admin lain
+</div>
+{% endblock %}

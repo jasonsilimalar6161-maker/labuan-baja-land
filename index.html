@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block extra_style %}
+<style>
+.hero{
+  text-align:center;padding:100px 0 70px;
+  background:linear-gradient(180deg,rgba(200,169,110,.06) 0%,transparent 100%);
+  margin-bottom:60px;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(200,169,110,.1);border:1px solid var(--border);
+  color:var(--primary);padding:6px 18px;border-radius:100px;
+  font-size:.8rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;
+  margin-bottom:24px;
+}
+.hero h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.2rem,5vw,3.8rem);
+  font-weight:700;line-height:1.2;
+  margin-bottom:20px;
+  background:linear-gradient(135deg,#fff 40%,var(--primary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero p{color:var(--muted);font-size:1.1rem;max-width:560px;margin:0 auto 36px}
+
+/* GRID */
+.section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;margin-bottom:8px}
+.section-sub{color:var(--muted);margin-bottom:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:28px;margin-bottom:80px}
+
+/* CARD */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  transition:.35s;
+  position:relative;
+}
+.card:hover{transform:translateY(-6px);border-color:rgba(200,169,110,.45);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.card-img{position:relative;height:220px;overflow:hidden;background:#111d2e}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:.5s}
+.card:hover .card-img img{transform:scale(1.06)}
+.card-badge{
+  position:absolute;top:14px;left:14px;
+  background:var(--primary);color:#0a1628;
+  padding:4px 12px;border-radius:100px;font-size:.75rem;font-weight:600;
+}
+.card-status{
+  position:absolute;top:14px;right:14px;
+  padding:4px 12px;border-radius:100px;font-size:.75rem;font-weight:600;
+}
+.status-dijual{background:rgba(40,167,69,.9);color:#fff}
+.status-terjual{background:rgba(108,117,125,.9);color:#fff}
+.card-body{padding:22px}
+.card-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;margin-bottom:10px}
+.card-location{color:var(--muted);font-size:.85rem;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tag{
+  background:rgba(200,169,110,.1);border:1px solid var(--border);
+  color:var(--primary);padding:3px 10px;border-radius:100px;font-size:.75rem;
+}
+.card-price{font-size:1.4rem;font-weight:700;color:var(--primary);font-family:'Playfair Display',serif}
+.card-price span{font-size:.8rem;color:var(--muted);font-weight:400;font-family:'DM Sans',sans-serif}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.card-area{color:var(--muted);font-size:.85rem}
+
+.empty-state{text-align:center;padding:100px 0;color:var(--muted)}
+.empty-state i{font-size:3rem;margin-bottom:16px;opacity:.4}
+</style>
+{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">🏝 Labuan Bajo · Nusa Tenggara Timur</div>
+    <h1>{{ settings.hero_text or 'Temukan Tanah Impian Anda di Labuan Bajo' }}</h1>
+    <p>{{ settings.site_subtitle or 'Properti Premium di Surga Indonesia' }}</p>
+    <a href="#listings" class="btn btn-primary">Lihat Listing Tanah</a>
+  </div>
+</section>
+
+<div class="container" id="listings">
+  <div class="section-title">Listing Tanah Tersedia</div>
+  <div class="section-sub">{{ lands|length }} properti ditemukan di Labuan Bajo</div>
+
+  {% if lands %}
+  <div class="grid">
+    {% for land in lands %}
+    <a href="/tanah/{{ land.id }}" style="text-decoration:none;color:inherit">
+    <div class="card">
+      <div class="card-img">
+        {% set imgs = land.images | fromjson %}
+        {% if imgs %}
+          <img src="/static/uploads/{{ imgs[0] }}" alt="{{ land.title }}" loading="lazy">
+        {% else %}
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted)">
+            <i class="fa-regular fa-image" style="font-size:3rem;opacity:.3"></i>
+          </div>
+        {% endif %}
+        <div class="card-badge">{{ land.certificate }}</div>
+        <div class="card-status status-{{ land.status | lower }}">{{ land.status }}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ land.title }}</div>
+        <div class="card-location">
+          <i class="fas fa-map-marker-alt" style="color:var(--primary)"></i>
+          {{ land.location }}
+        </div>
+        <div class="card-tags">
+          <span class="tag"><i class="fas fa-certificate"></i> {{ land.certificate }}</span>
+          <span class="tag">{{ land.land_type }}</span>
+          {% if land.lat and land.lng %}<span class="tag"><i class="fas fa-map-pin"></i> Ada Koordinat</span>{% endif %}
+        </div>
+        <div class="card-price">Rp {{ '{:,.0f}'.format(land.price).replace(',', '.') }}<span>/bidang</span></div>
+        <div class="card-footer">
+          <span class="card-area"><i class="fas fa-ruler-combined"></i> {{ land.area }} m²</span>
+          <span class="btn btn-outline btn-sm">Lihat Detail</span>
+        </div>
+      </div>
+    </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-mountain"></i>
+    <p>Belum ada listing tanah tersedia.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
